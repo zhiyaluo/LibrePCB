@@ -53,6 +53,9 @@ class ComponentSymbolVariant final : public IF_XmlSerializableObject
         explicit ComponentSymbolVariant(const XmlDomElement& domElement) throw (Exception);
         ~ComponentSymbolVariant() noexcept;
 
+        // Getters: General
+        bool areMultiplePinsConnectedToSameSignal() const noexcept;
+
         // Getters: Attributes
         const Uuid& getUuid() const noexcept {return mUuid;}
         const QString& getNorm() const noexcept {return mNorm;}

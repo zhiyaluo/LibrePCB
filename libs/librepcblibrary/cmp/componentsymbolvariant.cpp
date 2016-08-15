@@ -70,6 +70,11 @@ ComponentSymbolVariant::ComponentSymbolVariant(const XmlDomElement& domElement) 
             }
             mSymbolItems.append(item);
         }
+        if (areMultiplePinsConnectedToSameSignal()) {
+            throw RuntimeError(__FILE__, __LINE__, QString(), QString(tr("The symbol "
+                "variant \"%1\" in \"%2\" connects multiple pins to the same component "
+                "signal.")).arg(mUuid.toStr(), domElement.getDocFilePath().toNative()));
+        }
 
         if (!checkAttributesValidity()) throw LogicError(__FILE__, __LINE__);
     }
@@ -83,6 +88,25 @@ ComponentSymbolVariant::ComponentSymbolVariant(const XmlDomElement& domElement) 
 ComponentSymbolVariant::~ComponentSymbolVariant() noexcept
 {
     qDeleteAll(mSymbolItems);       mSymbolItems.clear();
+}
+
+/*****************************************************************************************
+ *  Getters: General
+ ****************************************************************************************/
+
+bool ComponentSymbolVariant::areMultiplePinsConnectedToSameSignal() const noexcept
+{
+    QSet<Uuid> usedSignals;
+    foreach (ComponentSymbolVariantItem* item, mSymbolItems) { Q_ASSERT(item);
+        foreach (ComponentPinSignalMapItem* map, item->getPinSignalMappings()) { Q_ASSERT(map);
+            if (usedSignals.contains(map->getSignalUuid())) {
+                return true;
+            } else {
+                usedSignals.insert(map->getSignalUuid());
+            }
+        }
+    }
+    return false;
 }
 
 /*****************************************************************************************
@@ -185,10 +209,11 @@ XmlDomElement* ComponentSymbolVariant::serializeToXmlDomElement() const throw (E
 
 bool ComponentSymbolVariant::checkAttributesValidity() const noexcept
 {
-    if (mUuid.isNull())                     return false;
-    if (mNames.value("en_US").isEmpty())    return false;
-    if (!mDescriptions.contains("en_US"))   return false;
-    if (mSymbolItems.isEmpty())             return false;
+    if (mUuid.isNull())                         return false;
+    if (mNames.value("en_US").isEmpty())        return false;
+    if (!mDescriptions.contains("en_US"))       return false;
+    if (mSymbolItems.isEmpty())                 return false;
+    if (areMultiplePinsConnectedToSameSignal()) return false;
     return true;
 }
 
