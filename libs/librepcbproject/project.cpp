@@ -409,24 +409,6 @@ void Project::removeSchematic(Schematic& schematic, bool deleteSchematic) throw 
     }
 }
 
-void Project::exportSchematicsAsPdf(const FilePath& filepath) throw (Exception)
-{
-    QPrinter printer(QPrinter::HighResolution);
-    printer.setPaperSize(QPrinter::A4);
-    printer.setOrientation(QPrinter::Landscape);
-    printer.setOutputFormat(QPrinter::PdfFormat);
-    printer.setCreator(QString("LibrePCB %1").arg(qApp->applicationVersion()));
-    printer.setOutputFileName(filepath.toStr());
-
-    QList<int> pages;
-    for (int i = 0; i < mSchematics.count(); i++)
-        pages.append(i);
-
-    printSchematicPages(printer, pages);
-
-    QDesktopServices::openUrl(QUrl::fromLocalFile(filepath.toStr()));
-}
-
 /*****************************************************************************************
  *  Board Methods
  ****************************************************************************************/
@@ -687,35 +669,6 @@ bool Project::save(bool toOriginal, QStringList& errors) noexcept
         mIsRestored = false;
 
     return success;
-}
-
-void Project::printSchematicPages(QPrinter& printer, QList<int>& pages) throw (Exception)
-{
-    if (pages.isEmpty())
-        throw RuntimeError(__FILE__, __LINE__, QString(), tr("No schematic pages selected."));
-
-    QPainter painter(&printer);
-
-    for (int i = 0; i < pages.count(); i++)
-    {
-        Schematic* schematic = getSchematicByIndex(pages[i]);
-        if (!schematic)
-        {
-            throw RuntimeError(__FILE__, __LINE__, QString(),
-                QString(tr("No schematic page with the index %1 found.")).arg(pages[i]));
-        }
-        schematic->clearSelection();
-        schematic->renderToQPainter(painter);
-
-        if (i != pages.count() - 1)
-        {
-            if (!printer.newPage())
-            {
-                throw RuntimeError(__FILE__, __LINE__, QString(),
-                    tr("Unknown error while printing."));
-            }
-        }
-    }
 }
 
 /*****************************************************************************************

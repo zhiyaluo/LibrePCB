@@ -22,6 +22,7 @@
  ****************************************************************************************/
 #include <QtCore>
 #include <QtWidgets>
+#include <QtPrintSupport>
 #include "boardeditor.h"
 #include "ui_boardeditor.h"
 #include <librepcbproject/project.h>
@@ -402,21 +403,38 @@ void BoardEditor::on_actionGrid_triggered()
     }
 }
 
+void BoardEditor::on_actionPrint_triggered()
+{
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setPaperSize(QPrinter::A4);
+    printer.setOrientation(QPrinter::Landscape);
+    printer.setCreator(QString("LibrePCB %1").arg(qApp->applicationVersion()));
+
+    QPrintDialog dialog(&printer, this);
+    dialog.setOption(QAbstractPrintDialog::PrintSelection, false);
+    dialog.setOption(QAbstractPrintDialog::PrintPageRange, false);
+    if (dialog.exec() == QDialog::Accepted) {
+        printBoard(&printer);
+    }
+}
+
 void BoardEditor::on_actionExportAsPdf_triggered()
 {
-    try
-    {
-        QString filename = QFileDialog::getSaveFileName(this, tr("PDF Export"),
-                                                        QDir::homePath(), "*.pdf");
-        if (filename.isEmpty()) return;
-        if (!filename.endsWith(".pdf")) filename.append(".pdf");
-        //FilePath filepath(filename);
-        //mProject.exportSchematicsAsPdf(filepath); // this method can throw an exception
-    }
-    catch (Exception& e)
-    {
-        QMessageBox::warning(this, tr("Error"), e.getUserMsg());
-    }
+    QString filename = QFileDialog::getSaveFileName(this, tr("PDF Export"),
+                                                    QDir::homePath(), "*.pdf");
+    if (filename.isEmpty()) return;
+    if (!filename.endsWith(".pdf")) filename.append(".pdf");
+    FilePath filepath(filename);
+
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setPaperSize(QPrinter::A4);
+    printer.setOrientation(QPrinter::Landscape);
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setCreator(QString("LibrePCB %1").arg(qApp->applicationVersion()));
+    printer.setOutputFileName(filepath.toStr());
+    printBoard(&printer);
+
+    QDesktopServices::openUrl(QUrl::fromLocalFile(filepath.toStr()));
 }
 
 void BoardEditor::on_actionGenerateFabricationData_triggered()
@@ -475,6 +493,18 @@ bool BoardEditor::graphicsViewEventHandler(QEvent* event)
 {
     BEE_RedirectedQEvent* e = new BEE_RedirectedQEvent(BEE_Base::GraphicsViewEvent, event);
     return mFsm->processEvent(e, true);
+}
+
+void BoardEditor::printBoard(QPrinter* printer) noexcept
+{
+    QPainter painter(printer);
+    Board* board = getActiveBoard();
+    if (board) {
+        board->clearSelection();
+        board->renderToQPainter(painter);
+    } else {
+        qWarning() << "No active board to print.";
+    }
 }
 
 /*****************************************************************************************

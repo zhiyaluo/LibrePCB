@@ -25,6 +25,7 @@
  ****************************************************************************************/
 #include <QtCore>
 #include <QtWidgets>
+#include <QPrinter>
 #include <librepcbcommon/graphics/if_graphicsvieweventhandler.h>
 
 /*****************************************************************************************
@@ -90,6 +91,7 @@ class SchematicEditor final : public QMainWindow, public IF_GraphicsViewEventHan
         void on_actionUndo_triggered();
         void on_actionRedo_triggered();
         void on_actionGrid_triggered();
+        void on_actionPrint_triggered();
         void on_actionPDF_Export_triggered();
         void on_actionToolAddComponent_triggered();
         void on_actionAddComp_Resistor_triggered();
@@ -115,6 +117,7 @@ class SchematicEditor final : public QMainWindow, public IF_GraphicsViewEventHan
 
         // Private Methods
         bool graphicsViewEventHandler(QEvent* event);
+        void printSchematics(QPrinter& printer) noexcept;
 
         // General Attributes
         ProjectEditor& mProjectEditor;

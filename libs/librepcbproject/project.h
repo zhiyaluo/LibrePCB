@@ -315,18 +315,6 @@ class Project final : public QObject, public IF_AttributeProvider,
          */
         void removeSchematic(Schematic& schematic, bool deleteSchematic = false) throw (Exception);
 
-        /**
-         * @brief Export the schematic pages as a PDF
-         *
-         * @param filepath  The filepath where the PDF should be saved. If the file exists
-         *                  already, it will be overwritten.
-         *
-         * @throw Exception     On error
-         *
-         * @todo add more parameters (paper size, orientation, pages to print, ...)
-         */
-        void exportSchematicsAsPdf(const FilePath& filepath) throw (Exception);
-
 
         // Board Methods
 
@@ -522,16 +510,6 @@ class Project final : public QObject, public IF_AttributeProvider,
          * @return True on success (then the error list should be empty), false otherwise
          */
         bool save(bool toOriginal, QStringList& errors) noexcept;
-
-        /**
-         * @brief Print some schematics to a QPrinter (printer or file)
-         *
-         * @param printer   The QPrinter where to print the schematic pages
-         * @param pages     A list with all schematic page indexes which should be printed
-         *
-         * @throw Exception     On error
-         */
-        void printSchematicPages(QPrinter& printer, QList<int>& pages) throw (Exception);
 
 
         // Project File (*.lpp)

@@ -178,6 +178,7 @@ class Board final : public QObject, public IF_AttributeProvider,
         const QRectF& restoreViewSceneRect() const noexcept {return mViewRect;}
         void setSelectionRect(const Point& p1, const Point& p2, bool updateItems) noexcept;
         void clearSelection() const noexcept;
+        void renderToQPainter(QPainter& painter) const noexcept;
 
         // Helper Methods
         bool getAttributeValue(const QString& attrNS, const QString& attrKey,

@@ -25,6 +25,7 @@
  ****************************************************************************************/
 #include <QtCore>
 #include <QtWidgets>
+#include <QPrinter>
 #include <librepcbcommon/uuid.h>
 #include <librepcbcommon/graphics/if_graphicsvieweventhandler.h>
 
@@ -101,6 +102,7 @@ class BoardEditor final : public QMainWindow, public IF_GraphicsViewEventHandler
         void on_actionUndo_triggered();
         void on_actionRedo_triggered();
         void on_actionGrid_triggered();
+        void on_actionPrint_triggered();
         void on_actionExportAsPdf_triggered();
         void on_actionGenerateFabricationData_triggered();
         void on_actionProjectProperties_triggered();
@@ -123,6 +125,7 @@ class BoardEditor final : public QMainWindow, public IF_GraphicsViewEventHandler
 
         // Private Methods
         bool graphicsViewEventHandler(QEvent* event);
+        void printBoard(QPrinter* printer) noexcept;
 
         // General Attributes
         ProjectEditor& mProjectEditor;

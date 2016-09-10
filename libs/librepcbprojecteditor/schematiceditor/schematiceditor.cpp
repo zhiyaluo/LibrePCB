@@ -22,6 +22,7 @@
  ****************************************************************************************/
 #include <QtCore>
 #include <QtWidgets>
+#include <QtPrintSupport>
 #include "schematiceditor.h"
 #include "ui_schematiceditor.h"
 #include <librepcbproject/project.h>
@@ -319,21 +320,37 @@ void SchematicEditor::on_actionGrid_triggered()
     }
 }
 
+void SchematicEditor::on_actionPrint_triggered()
+{
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setPaperSize(QPrinter::A4);
+    printer.setOrientation(QPrinter::Landscape);
+    printer.setCreator(QString("LibrePCB %1").arg(qApp->applicationVersion()));
+
+    QPrintDialog dialog(&printer, this);
+    dialog.setOption(QAbstractPrintDialog::PrintSelection, false);
+    if (dialog.exec() == QDialog::Accepted) {
+        printSchematics(printer);
+    }
+}
+
 void SchematicEditor::on_actionPDF_Export_triggered()
 {
-    try
-    {
-        QString filename = QFileDialog::getSaveFileName(this, tr("PDF Export"),
-                                                        QDir::homePath(), "*.pdf");
-        if (filename.isEmpty()) return;
-        if (!filename.endsWith(".pdf")) filename.append(".pdf");
-        FilePath filepath(filename);
-        mProject.exportSchematicsAsPdf(filepath); // this method can throw an exception
-    }
-    catch (Exception& e)
-    {
-        QMessageBox::warning(this, tr("Error"), e.getUserMsg());
-    }
+    QString filename = QFileDialog::getSaveFileName(this, tr("PDF Export"),
+                                                    QDir::homePath(), "*.pdf");
+    if (filename.isEmpty()) return;
+    if (!filename.endsWith(".pdf")) filename.append(".pdf");
+    FilePath filepath(filename);
+
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setPaperSize(QPrinter::A4);
+    printer.setOrientation(QPrinter::Landscape);
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setCreator(QString("LibrePCB %1").arg(qApp->applicationVersion()));
+    printer.setOutputFileName(filepath.toStr());
+    printSchematics(printer);
+
+    QDesktopServices::openUrl(QUrl::fromLocalFile(filepath.toStr()));
 }
 
 void SchematicEditor::on_actionToolAddComponent_triggered()
@@ -413,10 +430,45 @@ bool SchematicEditor::graphicsViewEventHandler(QEvent* event)
     return mFsm->processEvent(e, true);
 }
 
+void SchematicEditor::printSchematics(QPrinter& printer) noexcept
+{
+    QPainter painter(&printer);
+    int firstPage = 0, lastPage = 0;
+    switch (printer.printRange()) {
+        case QPrinter::PrintRange::AllPages:
+            firstPage = 0;
+            lastPage = mProject.getSchematics().count() - 1;
+            break;
+        case QPrinter::PrintRange::PageRange:
+            firstPage = qMax(printer.fromPage()-1, 0);
+            lastPage = qMin(printer.toPage()-1, mProject.getSchematics().count() - 1);
+            break;
+        case QPrinter::PrintRange::Selection:
+        case QPrinter::PrintRange::CurrentPage:
+            firstPage = mActiveSchematicIndex;
+            lastPage = mActiveSchematicIndex;
+            break;
+        default: Q_ASSERT(false); break;
+    }
+    for (int i = firstPage; i <= lastPage; i++) {
+        Schematic* schematic = mProject.getSchematicByIndex(i);
+        if (schematic) {
+            schematic->clearSelection();
+            schematic->renderToQPainter(painter);
+            if (i != lastPage) {
+                if (!printer.newPage()) {
+                    qCritical() << "Could not add a new page.";
+                }
+            }
+        } else {
+            qWarning() << "Invalid schematic index:" << i;
+        }
+    }
+}
+
 /*****************************************************************************************
  *  End of File
  ****************************************************************************************/
 
 } // namespace project
 } // namespace librepcb
-

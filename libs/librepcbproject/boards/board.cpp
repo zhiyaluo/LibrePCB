@@ -864,6 +864,11 @@ void Board::clearSelection() const noexcept
         netline->setSelected(false);
 }
 
+void Board::renderToQPainter(QPainter& painter) const noexcept
+{
+    mGraphicsScene->render(&painter, QRectF(), mGraphicsScene->itemsBoundingRect(), Qt::KeepAspectRatio);
+}
+
 /*****************************************************************************************
  *  Helper Methods
  ****************************************************************************************/
