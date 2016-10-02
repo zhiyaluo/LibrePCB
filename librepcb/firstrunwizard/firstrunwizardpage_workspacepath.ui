@@ -19,6 +19,9 @@
   <property name="subTitle">
    <string>Please select a directory to open or create a LibrePCB workspace.</string>
   </property>
+  <attribute name="pageId">
+   <string notr="true">1</string>
+  </attribute>
   <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0,0,0,0,0,0">
    <item>
     <widget class="QLabel" name="label">

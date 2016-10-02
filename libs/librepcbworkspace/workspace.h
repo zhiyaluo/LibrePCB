@@ -264,11 +264,13 @@ class Workspace final : public QObject
         /**
          * @brief Create a new workspace
          *
-         * @param path  A path to a directory where to create the new workspace
+         * @param path          A path to a directory where to create the new workspace
+         * @param libsToInstall A list of libraries which should be downloaded when
+         *                      opening the workspace the first time
          *
          * @throws Exception on error.
          */
-        static void createNewWorkspace(const FilePath& path) throw (Exception);
+        static void createNewWorkspace(const FilePath& path, const QSet<Uuid> libsToInstall) throw (Exception);
 
         /**
          * @brief Get the most recently used workspace path

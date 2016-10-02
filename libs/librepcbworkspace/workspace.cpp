@@ -305,9 +305,16 @@ Version Workspace::getHighestFileFormatVersionOfWorkspace(const FilePath& path) 
     }
 }
 
-void Workspace::createNewWorkspace(const FilePath& path) throw (Exception)
+void Workspace::createNewWorkspace(const FilePath& path, const QSet<Uuid> libsToInstall) throw (Exception)
 {
     FileUtils::writeFile(path.getPathTo(".librepcb-workspace"), QByteArray()); // can throw
+    if (!libsToInstall.isEmpty()) {
+        QString content;
+        foreach (const Uuid& uuid, libsToInstall) {
+            content.append(uuid.toStr() % "\n");
+        }
+        FileUtils::writeFile(path.getPathTo(".libraries-to-install"), content.toUtf8()); // can throw
+    }
 }
 
 FilePath Workspace::getMostRecentlyUsedWorkspacePath() noexcept
@@ -333,7 +340,7 @@ FilePath Workspace::chooseWorkspacePath() noexcept
 
         if (answer == QMessageBox::Yes) {
             try {
-                createNewWorkspace(path); // can throw
+                createNewWorkspace(path, QSet<Uuid>()); // can throw
             } catch (const Exception& e) {
                 QMessageBox::critical(0, tr("Error"), tr("Could not create the workspace!"));
                 return FilePath();

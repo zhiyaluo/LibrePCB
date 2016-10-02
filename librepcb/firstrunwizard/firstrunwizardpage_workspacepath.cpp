@@ -92,6 +92,18 @@ bool FirstRunWizardPage_WorkspacePath::validatePage() noexcept
     }
 }
 
+int FirstRunWizardPage_WorkspacePath::nextId() const noexcept
+{
+    if (field("CreateWorkspace").toBool()) {
+        return 2; // libraries
+    } else if (field("OpenWorkspace").toBool()) {
+        return -1;
+    } else {
+        Q_ASSERT(false);
+        return -1;
+    }
+}
+
 /*****************************************************************************************
  *  Event Handlers
  ****************************************************************************************/
@@ -101,6 +113,7 @@ void FirstRunWizardPage_WorkspacePath::on_rbtnCreateWs_toggled(bool checked)
     mUi->lblCreateWs->setEnabled(checked);
     mUi->edtCreateWsPath->setEnabled(checked);
     mUi->btnCreateWsBrowse->setEnabled(checked);
+    setFinalPage(false);
 }
 
 void FirstRunWizardPage_WorkspacePath::on_rbtnOpenWs_toggled(bool checked)
@@ -108,6 +121,7 @@ void FirstRunWizardPage_WorkspacePath::on_rbtnOpenWs_toggled(bool checked)
     mUi->lblOpenWs->setEnabled(checked);
     mUi->edtOpenWsPath->setEnabled(checked);
     mUi->btnOpenWsBrowse->setEnabled(checked);
+    setFinalPage(true);
 }
 
 void FirstRunWizardPage_WorkspacePath::on_btnCreateWsBrowse_clicked()

@@ -57,6 +57,7 @@ class FirstRunWizardPage_WorkspacePath final : public QWizardPage
 
         // Inherited Methods
         bool validatePage() noexcept override;
+        int nextId() const noexcept override;
 
 
     private slots:

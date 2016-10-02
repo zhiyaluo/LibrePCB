@@ -96,20 +96,23 @@ SOURCES += \
     firstrunwizard/firstrunwizard.cpp \
     firstrunwizard/firstrunwizardpage_welcome.cpp \
     firstrunwizard/firstrunwizardpage_workspacepath.cpp \
-    markdown/markdownconverter.cpp
+    markdown/markdownconverter.cpp \
+    firstrunwizard/firstrunwizardpage_libraries.cpp
 
 HEADERS += \
     controlpanel/controlpanel.h \
     firstrunwizard/firstrunwizard.h \
     firstrunwizard/firstrunwizardpage_welcome.h \
     firstrunwizard/firstrunwizardpage_workspacepath.h \
-    markdown/markdownconverter.h
+    markdown/markdownconverter.h \
+    firstrunwizard/firstrunwizardpage_libraries.h
 
 FORMS += \
     controlpanel/controlpanel.ui \
     firstrunwizard/firstrunwizard.ui \
     firstrunwizard/firstrunwizardpage_welcome.ui \
-    firstrunwizard/firstrunwizardpage_workspacepath.ui
+    firstrunwizard/firstrunwizardpage_workspacepath.ui \
+    firstrunwizard/firstrunwizardpage_libraries.ui
 
 
 # Custom compiler "lrelease" for qm generation

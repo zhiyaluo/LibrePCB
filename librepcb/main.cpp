@@ -202,7 +202,7 @@ static FilePath determineWorkspacePath() noexcept
             wsPath = wizard.getWorkspaceFilePath();
             if (wizard.getCreateNewWorkspace()) {
                 try {
-                    Workspace::createNewWorkspace(wsPath); // can throw
+                    Workspace::createNewWorkspace(wsPath, wizard.getLibrariesToInstall()); // can throw
                 } catch (const Exception& e) {
                     QMessageBox::critical(0, Application::translate("Workspace", "Error"),
                                           e.getUserMsg());

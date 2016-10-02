@@ -24,6 +24,7 @@
 #include "ui_firstrunwizard.h"
 #include "firstrunwizardpage_welcome.h"
 #include "firstrunwizardpage_workspacepath.h"
+#include "firstrunwizardpage_libraries.h"
 
 /*****************************************************************************************
  *  Namespace
@@ -42,6 +43,7 @@ FirstRunWizard::FirstRunWizard(QWidget *parent) noexcept :
     // add pages
     addPage(new FirstRunWizardPage_Welcome());
     addPage(new FirstRunWizardPage_WorkspacePath());
+    addPage(new FirstRunWizardPage_Libraries());
 
     // set header logo
     setPixmap(WizardPixmap::LogoPixmap, QPixmap(":/img/logo/48x48.png"));
@@ -66,6 +68,23 @@ FilePath FirstRunWizard::getWorkspaceFilePath() const noexcept
         return FilePath(field("CreateWorkspacePath").toString());
     else
         return FilePath(field("OpenWorkspacePath").toString());
+}
+
+QSet<Uuid> FirstRunWizard::getLibrariesToInstall() const noexcept
+{
+    QSet<Uuid> libs;
+    if (getCreateNewWorkspace()) {
+        QStringList libsToInstall = field("LibrariesToInstall").toStringList();
+        foreach (const QString& lib, libsToInstall) {
+            Uuid uuid(lib);
+            if (!uuid.isNull()) {
+                libs.insert(uuid);
+            } else {
+                qWarning() << "Invalid UUID:" << lib;
+            }
+        }
+    }
+    return libs;
 }
 
 /*****************************************************************************************

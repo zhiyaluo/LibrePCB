@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIBREPCB_FIRSTRUNWIZARD_H
-#define LIBREPCB_FIRSTRUNWIZARD_H
+#ifndef LIBREPCB_FIRSTRUNWIZARDPAGE_LIBRARIES_H
+#define LIBREPCB_FIRSTRUNWIZARDPAGE_LIBRARIES_H
 
 /*****************************************************************************************
  *  Includes
@@ -26,50 +26,68 @@
 #include <QtCore>
 #include <QtWidgets>
 #include <librepcbcommon/uuid.h>
-#include <librepcbcommon/fileio/filepath.h>
 
 /*****************************************************************************************
  *  Namespace / Forward Declarations
  ****************************************************************************************/
 namespace librepcb {
 
+class Repository;
+
 namespace Ui {
-class FirstRunWizard;
+class FirstRunWizardPage_Libraries;
 }
 
 /*****************************************************************************************
- *  Class FirstRunWizard
+ *  Class FirstRunWizardPage_Libraries
  ****************************************************************************************/
 
 /**
- * @brief The FirstRunWizard class
+ * @brief The FirstRunWizardPage_Libraries class
  *
  * @author ubruhin
- * @date 2015-09-22
+ * @date 2016-10-02
  */
-class FirstRunWizard final : public QWizard
+class FirstRunWizardPage_Libraries final : public QWizardPage
 {
         Q_OBJECT
+        Q_PROPERTY(QStringList selectedLibraries MEMBER mSelectedLibraries)
 
     public:
 
         // Constructors / Destructor
-        explicit FirstRunWizard(QWidget* parent = 0) noexcept;
-        ~FirstRunWizard() noexcept;
+        FirstRunWizardPage_Libraries(const FirstRunWizardPage_Libraries& other) = delete;
+        explicit FirstRunWizardPage_Libraries(QWidget* parent = nullptr) noexcept;
+        ~FirstRunWizardPage_Libraries() noexcept;
 
-        // Getters
-        bool getCreateNewWorkspace() const noexcept;
-        FilePath getWorkspaceFilePath() const noexcept;
-        QSet<Uuid> getLibrariesToInstall() const noexcept;
+        // Inherited Methods
+        void initializePage() noexcept override;
+
+        // Operator Overloadings
+        FirstRunWizardPage_Libraries& operator=(const FirstRunWizardPage_Libraries& rhs) = delete;
 
 
-    private:
+    signals:
 
-        // Private Methods
-        Q_DISABLE_COPY(FirstRunWizard)
+        void selectedLibrariesChanged(const QStringList& libs);
 
-        // Private Membervariables
-        QScopedPointer<Ui::FirstRunWizard> mUi;
+
+    private: // Methods
+
+        void clearLibraryList() noexcept;
+        void libraryListReceived(const QJsonArray& libs) noexcept;
+        void errorWhileFetchingLibraryList(const QString& errorMsg) noexcept;
+        void listItemChanged(const QListWidgetItem* item) noexcept;
+        Uuid getLibraryUuid(const QListWidgetItem* lib) const noexcept;
+        QSet<Uuid> getLibraryDependencies(const QListWidgetItem* lib) const noexcept;
+
+
+    private: // Data
+
+        QScopedPointer<Ui::FirstRunWizardPage_Libraries> mUi;
+        QScopedPointer<Repository> mRepository;
+        QStringList mSelectedLibraries;
+        bool mListUpdateActive;
 };
 
 /*****************************************************************************************
@@ -78,4 +96,4 @@ class FirstRunWizard final : public QWizard
 
 } // namespace librepcb
 
-#endif // LIBREPCB_FIRSTRUNWIZARD_H
+#endif // LIBREPCB_FIRSTRUNWIZARDPAGE_LIBRARIES_H
