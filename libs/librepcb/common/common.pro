@@ -46,6 +46,7 @@ HEADERS += \
     cam/gerberaperturelist.h \
     cam/gerbergenerator.h \
     debug.h \
+    designatorstring.h \
     dialogs/boarddesignrulesdialog.h \
     dialogs/gridsettingsdialog.h \
     exceptions.h \
@@ -109,6 +110,7 @@ SOURCES += \
     cam/gerberaperturelist.cpp \
     cam/gerbergenerator.cpp \
     debug.cpp \
+    designatorstring.cpp \
     dialogs/boarddesignrulesdialog.cpp \
     dialogs/gridsettingsdialog.cpp \
     exceptions.cpp \
