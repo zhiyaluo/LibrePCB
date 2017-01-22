@@ -1,0 +1,22 @@
+/**
+
+    @page doc_naming_restrictions Naming Restrictions
+    
+    @tableofcontents
+
+    This page is an overview of the naming restrictions of many properties used in 
+    library elements and projects.
+
+
+    @section doc_naming_restrictions_library Library Elements
+
+        @section doc_naming_restrictions_symbol Symbol
+        
+            The name of symbols
+    
+    
+    @section doc_naming_restrictions_project Project Elements
+    
+        TODO
+
+*/

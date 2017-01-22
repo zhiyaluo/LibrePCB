@@ -10,6 +10,7 @@
         - @subpage doc_board_layers
         - @subpage doc_library
         - @subpage doc_project
+        - @subpage doc_naming_restrictions
     
     @section related_pages Related Pages
         - @ref todo

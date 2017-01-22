@@ -148,8 +148,14 @@ int DesignatorString::compare(const DesignatorString& other) const noexcept
 
 bool DesignatorString::checkValidity(const QString& value) noexcept
 {
-    QString validChars("_\\-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
-    ret.remove(QRegularExpression(QString("[^%1]").arg(validChars)));
+    if (value.length() > )
+    QString allowedChars =
+        "0123456789"
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "\\/+-_.:";
+    //ret.remove(QRegularExpression(QString("[^%1]").arg(validChars)));
+    return false;
 }
 
 /*****************************************************************************************
