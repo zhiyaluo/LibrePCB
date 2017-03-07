@@ -4,8 +4,11 @@
 set -eufv -o pipefail
 
 # build librepcb
-mkdir build
-cd build
-qmake ../librepcb.pro -r "QMAKE_CXX=$CXX" "QMAKE_CC=$CC"
-make -j8
+if [ "${TRAVIS_OS_NAME}" = "linux" ]
+then
+  docker run -it -e QMAKE_SPEC=${QMAKE_SPEC} -v ${TRAVIS_BUILD_DIR}:/librepcb -v $HOME/.ccache:/ccache ${DOCKER_IMAGE} /librepcb/dev/ci/build.sh
+elif [ "${TRAVIS_OS_NAME}" = "osx" ]
+then
+  ./dev/ci/build.sh
+fi
 

@@ -1,6 +1,10 @@
 language: cpp
 sudo: required
-cache: ccache
+services:
+  - docker
+cache:
+  directories:
+    - $HOME/.ccache
 notifications:
   email:
     on_success: change
@@ -13,12 +17,7 @@ matrix:
     - os: linux
       dist: trusty
       compiler: gcc
-      env: BUILD_DOXYGEN=true QT_BASE="trusty"
-    # Ubuntu 14.04 + Clang + Latest Qt from beineri PPA (https://launchpad.net/~beineri)
-    - os: linux
-      dist: trusty
-      compiler: clang
-      env: BUILD_DOXYGEN=false QT_BASE="qt57" QT_PPA="ppa:beineri/opt-qt571-trusty"
+      env: BUILD_DOXYGEN=true DOCKER_IMAGE="librepcb/librepcb:trusty" QMAKE_SPEC="linux-g++"
     # OS X + GCC
     - os: osx
       compiler: gcc
@@ -29,7 +28,7 @@ matrix:
       env: BUILD_DOXYGEN=false
 
 install:
-  - source ./dev/travis/install.sh # source required because it modifies the environment
+  - ./dev/travis/install.sh
 
 script:
   - ./dev/travis/build.sh

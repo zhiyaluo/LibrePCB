@@ -6,8 +6,7 @@ set -eufv -o pipefail
 # run tests
 if [ "${TRAVIS_OS_NAME}" = "linux" ]
 then
-  xvfb-run -a ./build/generated/unix/qztest
-  xvfb-run -a ./build/generated/unix/tests
+  docker run -it -v ${TRAVIS_BUILD_DIR}:/librepcb ${DOCKER_IMAGE} /librepcb/dev/ci/test.sh
 elif [ "${TRAVIS_OS_NAME}" = "osx" ]
 then
   ./build/generated/mac/qztest
