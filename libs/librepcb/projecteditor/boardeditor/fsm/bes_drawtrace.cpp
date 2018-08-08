@@ -44,6 +44,7 @@
 #include "../../cmd/cmdplaceboardnetpoint.h"
 #include "../../cmd/cmdcombineboardnetpoints.h"
 #include "../../cmd/cmdcombineallitemsunderboardnetpoint.h"
+#include "../pns_router/pns_librepcb_iface.h"
 
 /*****************************************************************************************
  *  Namespace
@@ -59,10 +60,8 @@ namespace editor {
 BES_DrawTrace::BES_DrawTrace(BoardEditor& editor, Ui::BoardEditor& editorUi,
                              GraphicsView& editorGraphicsView, UndoStack& undoStack) :
     BES_Base(editor, editorUi, editorGraphicsView, undoStack),
-    mSubState(SubState_Idle), mCurrentWireMode(WireMode_HV),
+    mSubState(SubState_Idle),
     mCurrentLayerName(GraphicsLayer::sTopCopper), mCurrentWidth(500000),
-    mFixedNetPoint(nullptr), mPositioningNetLine1(nullptr), mPositioningNetPoint1(nullptr),
-    mPositioningNetLine2(nullptr), mPositioningNetPoint2(nullptr),
     // command toolbar actions / widgets:
     mLayerLabel(nullptr), mLayerComboBox(nullptr), mWidthLabel(nullptr),
     mWidthComboBox(nullptr)
@@ -99,27 +98,6 @@ bool BES_DrawTrace::entry(BEE_Base* event) noexcept
 
     // clear board selection because selection does not make sense in this state
     if (mEditor.getActiveBoard()) mEditor.getActiveBoard()->clearSelection();
-
-    // Add wire mode actions to the "command" toolbar
-    mWireModeActions.insert(WireMode_HV, mEditorUi.commandToolbar->addAction(
-                            QIcon(":/img/command_toolbars/wire_h_v.png"), ""));
-    mWireModeActions.insert(WireMode_VH, mEditorUi.commandToolbar->addAction(
-                            QIcon(":/img/command_toolbars/wire_v_h.png"), ""));
-    mWireModeActions.insert(WireMode_9045, mEditorUi.commandToolbar->addAction(
-                            QIcon(":/img/command_toolbars/wire_90_45.png"), ""));
-    mWireModeActions.insert(WireMode_4590, mEditorUi.commandToolbar->addAction(
-                            QIcon(":/img/command_toolbars/wire_45_90.png"), ""));
-    mWireModeActions.insert(WireMode_Straight, mEditorUi.commandToolbar->addAction(
-                            QIcon(":/img/command_toolbars/wire_straight.png"), ""));
-    mActionSeparators.append(mEditorUi.commandToolbar->addSeparator());
-    updateWireModeActionsCheckedState();
-
-    // connect the wire mode actions with the slot updateWireModeActionsCheckedState()
-    foreach (WireMode mode, mWireModeActions.keys())
-    {
-        connect(mWireModeActions.value(mode), &QAction::triggered,
-                [this, mode](){mCurrentWireMode = mode; updateWireModeActionsCheckedState();});
-    }
 
     // add the "Layer:" label to the toolbar
     mLayerLabel = new QLabel(tr("Layer:"));
@@ -169,6 +147,32 @@ bool BES_DrawTrace::entry(BEE_Base* event) noexcept
     // change the cursor
     mEditorGraphicsView.setCursor(Qt::CrossCursor);
 
+    // PND
+    iface = new PNS::PNS_LIBREPCB_IFACE;
+    iface->SetBoard(mEditor.getActiveBoard());
+    iface->create_debug_decorator();
+    router = new PNS::ROUTER;
+    router->SetInterface(iface);
+    router->SetMode(PNS::ROUTER_MODE::PNS_MODE_ROUTE_SINGLE);
+    router->ClearWorld();
+    router->SyncWorld();
+    PNS::ROUTING_SETTINGS settings;
+    settings.SetShoveVias(false);
+    PNS::SIZES_SETTINGS sizes_settings;
+    router->LoadSettings(settings);
+    router->UpdateSizes(sizes_settings);
+
+    // Start routing?
+    //Track *track = get_track(args.selection);
+    //if (!track) {
+    //    return ToolResponse::end();
+    //}
+    //auto parent = iface->get_parent(track);
+    //wrapper->m_startItem = router->GetWorld()->FindItemByParent(parent, iface->get_net_code(track->net.uuid));
+    //VECTOR2I p0(args.coords.x, args.coords.y);
+    //if (!router->StartDragging(p0, wrapper->m_startItem, PNS::DM_ANY))
+    //    return ToolResponse::end();
+
     return true;
 }
 
@@ -180,12 +184,14 @@ bool BES_DrawTrace::exit(BEE_Base* event) noexcept
     if (mSubState != SubState_Idle)
         abortPositioning(true);
 
+    delete router;
+    delete iface;
+
     // Remove actions / widgets from the "command" toolbar
     delete mWidthComboBox;          mWidthComboBox = nullptr;
     delete mWidthLabel;             mWidthLabel = nullptr;
     delete mLayerComboBox;          mLayerComboBox = nullptr;
     delete mLayerLabel;             mLayerLabel = nullptr;
-    qDeleteAll(mWireModeActions);   mWireModeActions.clear();
     qDeleteAll(mActionSeparators);  mActionSeparators.clear();
 
     // change the cursor
@@ -273,7 +279,19 @@ BES_Base::ProcRetVal BES_DrawTrace::processPositioningSceneEvent(BEE_Base* event
             {
                 case Qt::LeftButton:
                     // fix the current point and add a new point + line
-                    addNextNetPoint(*board, pos);
+
+                    // PNS
+                    //if (router->FixRoute(wrapper->m_endSnapPoint, wrapper->m_endItem)) {
+                    //    router->StopRouting();
+                    //    imp->canvas_update();
+                    //    state = State::START;
+                    //    imp->get_highlights().clear();
+                    //    imp->update_highlights();
+                    //    update_tip();
+                    //    return ToolResponse();
+                    //}
+                    //router->Move(wrapper->m_endSnapPoint, wrapper->m_endItem);
+
                     return ForceStayInState;
                 case Qt::RightButton:
                     return ForceStayInState;
@@ -291,11 +309,6 @@ BES_Base::ProcRetVal BES_DrawTrace::processPositioningSceneEvent(BEE_Base* event
             {
                 case Qt::RightButton:
                     if (sceneEvent->screenPos() == sceneEvent->buttonDownScreenPos(Qt::RightButton)) {
-                        // switch to next wire mode
-                        mCurrentWireMode = static_cast<WireMode>(mCurrentWireMode+1);
-                        if (mCurrentWireMode == WireMode_COUNT) mCurrentWireMode = static_cast<WireMode>(0);
-                        updateWireModeActionsCheckedState();
-                        updateNetpointPositions(pos);
                         return ForceStayInState;
                     }
                     break;
@@ -310,7 +323,11 @@ BES_Base::ProcRetVal BES_DrawTrace::processPositioningSceneEvent(BEE_Base* event
             QGraphicsSceneMouseEvent* sceneEvent = dynamic_cast<QGraphicsSceneMouseEvent*>(qevent);
             Q_ASSERT(sceneEvent);
             Point pos = Point::fromPx(sceneEvent->scenePos()).mappedToGrid(board->getGridProperties().getInterval());
-            updateNetpointPositions(pos);
+
+            // PNS
+            VECTOR2I posv(pos.getX().toNm(), pos.getY().toNm());
+            router->Move(posv, nullptr);
+
             return ForceStayInState;
         }
 
@@ -321,8 +338,8 @@ BES_Base::ProcRetVal BES_DrawTrace::processPositioningSceneEvent(BEE_Base* event
     return PassToParentState;
 }
 
-bool BES_DrawTrace::startPositioning(Board& board, const Point& pos,
-                                    BI_NetPoint* fixedPoint) noexcept
+bool BES_DrawTrace::startPositioning(Board& /*board*/, const Point& pos,
+                                    BI_NetPoint* /*fixedPoint*/) noexcept
 {
     try
     {
@@ -331,45 +348,60 @@ bool BES_DrawTrace::startPositioning(Board& board, const Point& pos,
         mUndoStack.beginCmdGroup(tr("Draw Board Trace"));
         mSubState = SubState_PositioningNetPoint;
 
-        // determine the fixed netpoint (create one if it doesn't exist already)
-        if (fixedPoint) {
-            mFixedNetPoint = fixedPoint;
-        } else {
-            GraphicsLayer* layer = board.getLayerStack().getLayer(mCurrentLayerName);
-            if (!layer) {
-                throw RuntimeError(__FILE__, __LINE__,
-                    QString(tr("No layer selected.")));
+
+        // PNS
+        int tl = PNS::PNS_LIBREPCB_IFACE::layer_to_router(mCurrentLayerName);
+        VECTOR2I posv(pos.getX().toNm(), pos.getY().toNm());
+        PNS::ITEM *prioritized[4] = {0};
+        PNS::ITEM_SET candidates = router->QueryHoverItems(posv);
+
+        for (PNS::ITEM *item : candidates.Items()) {
+            //auto la = PNS::PNS_LIBREPCB_IFACE::layer_from_router(item->Layers().Start());
+            if (item->OfKind(PNS::ITEM::VIA_T | PNS::ITEM::SOLID_T)) {
+                if (!prioritized[2])
+                    prioritized[2] = item;
+                if (item->Layers().Overlaps(tl))
+                    prioritized[0] = item;
             }
-            CmdPlaceBoardNetPoint* cmd = new CmdPlaceBoardNetPoint(board, pos, *layer);
-            mUndoStack.appendToCmdGroup(cmd); // can throw
-            mFixedNetPoint = cmd->getNetPoint();
+            else {
+                if (!prioritized[3])
+                    prioritized[3] = item;
+                if (item->Layers().Overlaps(tl))
+                    prioritized[1] = item;
+            }
         }
-        Q_ASSERT(mFixedNetPoint);
-        GraphicsLayer* layer = &mFixedNetPoint->getLayer();
+        PNS::ITEM *rv = NULL;
+        for (int i = 0; i < 4; i++) {
+            PNS::ITEM *item = prioritized[i];
+            qDebug() << item;
 
-        // update the command toolbar
-        mLayerComboBox->setCurrentIndex(mLayerComboBox->findData(layer->getName()));
+            //if (tool->canvas->selection_filter.work_layer_only)
+            //    if (item && !item->Layers().Overlaps(tl))
+            //        item = NULL;
 
-        // add more netpoints & netlines
-        CmdBoardNetSegmentAddElements* cmd = new CmdBoardNetSegmentAddElements(
-            mFixedNetPoint->getNetSegment());
-        BI_NetPoint* p2 = cmd->addNetPoint(*layer, pos); Q_ASSERT(p2); // second netpoint
-        BI_NetLine* l1 = cmd->addNetLine(*mFixedNetPoint, *p2, mCurrentWidth); Q_ASSERT(l1); // first netline
-        BI_NetPoint* p3 = cmd->addNetPoint(*layer, pos); Q_ASSERT(p3); // third netpoint
-        BI_NetLine* l2 = cmd->addNetLine(*p2, *p3, mCurrentWidth); Q_ASSERT(l2); // second netline
-        mUndoStack.appendToCmdGroup(cmd); // can throw
+            if (item) {
+                rv = item;
+                break;
+            }
+        }
 
-        // update members
-        mPositioningNetPoint1 = p2;
-        mPositioningNetLine1 = l1;
-        mPositioningNetPoint2 = p3;
-        mPositioningNetLine2 = l2;
+        if (rv) {
+            PNS::PNS_LIBREPCB_IFACE* iface = dynamic_cast<PNS::PNS_LIBREPCB_IFACE*>(router->GetInterface());
+            NetSignal* sig = iface->get_net_for_code(rv->Net());
+            mCircuit.setHighlightedNetSignal(sig);
+        }
 
-        // properly place the new netpoints/netlines according the current wire mode
-        updateNetpointPositions(pos);
-
-        // highlight all elements of the current netsignal
-        mCircuit.setHighlightedNetSignal(&mFixedNetPoint->getNetSignalOfNetSegment());
+        // PNS
+        PNS::SIZES_SETTINGS sizes(router->Sizes());
+        sizes.SetTrackWidth(mCurrentWidth->toNm());
+        router->UpdateSizes(sizes);
+        PNS::ROUTING_SETTINGS settings(router->Settings());
+        settings.SetMode(PNS::RM_Walkaround);
+        router->LoadSettings(settings);
+        if (!router->StartRouting(posv, rv, tl)) {
+            std::cout << "error " << router->FailureReason() << std::endl;
+            return false;
+        }
 
         return true;
     }
@@ -383,78 +415,14 @@ bool BES_DrawTrace::startPositioning(Board& board, const Point& pos,
     }
 }
 
-bool BES_DrawTrace::addNextNetPoint(Board& board, const Point& pos) noexcept
-{
-    Q_ASSERT(mSubState == SubState_PositioningNetPoint);
-
-    // abort if p2 == p0 (no line drawn)
-    if (pos == mFixedNetPoint->getPosition()) {
-        abortPositioning(true);
-        return false;
-    } else {
-        bool finishCommand = false;
-
-        try
-        {
-            // remove p1 if p1 == p0 || p1 == p2
-            if (mPositioningNetPoint1->getPosition() == mFixedNetPoint->getPosition()) {
-                mUndoStack.appendToCmdGroup(new CmdCombineBoardNetPoints(*mPositioningNetPoint1, *mFixedNetPoint));
-            } else if (mPositioningNetPoint1->getPosition() == mPositioningNetPoint2->getPosition()) {
-                mUndoStack.appendToCmdGroup(new CmdCombineBoardNetPoints(*mPositioningNetPoint1, *mPositioningNetPoint2));
-            }
-
-            // combine all board items under "mPositioningNetPoint2" together
-            auto* cmd = new CmdCombineAllItemsUnderBoardNetPoint(*mPositioningNetPoint2);
-            mUndoStack.appendToCmdGroup(cmd);
-            finishCommand = cmd->hasCombinedSomeItems();
-        }
-        catch (const UserCanceled& e)
-        {
-            return false;
-        }
-        catch (const Exception& e)
-        {
-            QMessageBox::critical(&mEditor, tr("Error"), e.getMsg());
-            return false;
-        }
-
-        try
-        {
-            // finish the current command
-            mUndoStack.commitCmdGroup();
-            mSubState = SubState_Idle;
-
-            // abort or start a new command
-            if (finishCommand) {
-                mUndoStack.beginCmdGroup(QString()); // this is ugly!
-                abortPositioning(true);
-                return false;
-            } else {
-                return startPositioning(board, pos, mPositioningNetPoint2);
-            }
-        }
-        catch (const Exception& e)
-        {
-            QMessageBox::critical(&mEditor, tr("Error"), e.getMsg());
-            if (mSubState != SubState_Idle) {
-                abortPositioning(false);
-            }
-            return false;
-        }
-    }
-}
-
 bool BES_DrawTrace::abortPositioning(bool showErrMsgBox) noexcept
 {
     try
     {
+        router->StopRouting();
+
         mCircuit.setHighlightedNetSignal(nullptr);
         mSubState = SubState_Idle;
-        mFixedNetPoint = nullptr;
-        mPositioningNetLine1 = nullptr;
-        mPositioningNetLine2 = nullptr;
-        mPositioningNetPoint1 = nullptr;
-        mPositioningNetPoint2 = nullptr;
         mUndoStack.abortCmdGroup(); // can throw
         return true;
     }
@@ -463,16 +431,6 @@ bool BES_DrawTrace::abortPositioning(bool showErrMsgBox) noexcept
         if (showErrMsgBox) QMessageBox::critical(&mEditor, tr("Error"), e.getMsg());
         return false;
     }
-}
-
-void BES_DrawTrace::updateNetpointPositions(const Point& cursorPos) noexcept
-{
-    mPositioningNetPoint1->setPosition(calcMiddlePointPos(mFixedNetPoint->getPosition(),
-                                                          cursorPos, mCurrentWireMode));
-    mPositioningNetPoint2->setPosition(cursorPos);
-
-    // Force updating airwires immediately as they are important for creating traces.
-    mPositioningNetPoint2->getBoard().triggerAirWiresRebuild();
 }
 
 void BES_DrawTrace::layerComboBoxIndexChanged(int index) noexcept
@@ -485,43 +443,6 @@ void BES_DrawTrace::wireWidthComboBoxTextChanged(const QString& width) noexcept
 {
     try {mCurrentWidth = Length::fromMm(width);} catch (...) {return;}
     if (mSubState != SubState::SubState_PositioningNetPoint) return;
-    if (mPositioningNetLine1) mPositioningNetLine1->setWidth(mCurrentWidth);
-    if (mPositioningNetLine2) mPositioningNetLine2->setWidth(mCurrentWidth);
-}
-
-void BES_DrawTrace::updateWireModeActionsCheckedState() noexcept
-{
-    foreach (WireMode key, mWireModeActions.keys()) {
-        mWireModeActions.value(key)->setCheckable(key == mCurrentWireMode);
-        mWireModeActions.value(key)->setChecked(key == mCurrentWireMode);
-    }
-}
-
-Point BES_DrawTrace::calcMiddlePointPos(const Point& p1, const Point p2, WireMode mode) const noexcept
-{
-    Point delta = p2 - p1;
-    switch (mode)
-    {
-        case WireMode_HV:
-            return Point(p2.getX(), p1.getY());
-        case WireMode_VH:
-            return Point(p1.getX(), p2.getY());
-        case WireMode_9045:
-            if (delta.getX().abs() >= delta.getY().abs())
-                return Point(p2.getX() - delta.getY().abs() * (delta.getX() >= 0 ? 1 : -1), p1.getY());
-            else
-                return Point(p1.getX(), p2.getY() - delta.getX().abs() * (delta.getY() >= 0 ? 1 : -1));
-        case WireMode_4590:
-            if (delta.getX().abs() >= delta.getY().abs())
-                return Point(p1.getX() + delta.getY().abs() * (delta.getX() >= 0 ? 1 : -1), p2.getY());
-            else
-                return Point(p2.getX(), p1.getY() + delta.getX().abs() * (delta.getY() >= 0 ? 1 : -1));
-        case WireMode_Straight:
-            return p1;
-        default:
-            Q_ASSERT(false);
-            return Point();
-    }
 }
 
 /*****************************************************************************************

@@ -30,6 +30,13 @@
 /*****************************************************************************************
  *  Namespace / Forward Declarations
  ****************************************************************************************/
+namespace PNS {
+class ROUTER;
+class PNS_LIBREPCB_IFACE;
+class ITEM;
+class MEANDER_PLACER_BASE;
+} // namespace PNS
+
 namespace librepcb {
 namespace project {
 
@@ -73,20 +80,6 @@ class BES_DrawTrace final : public BES_Base
             SubState_PositioningNetPoint    ///< in this state, an undo command is active!
         };
 
-        /**
-         * @brief The WireMode enum contains all available wire modes
-         *
-         * @note The first item must have the value 0!
-         */
-        enum WireMode {
-            WireMode_HV = 0,    ///< horizontal - vertical [default]
-            WireMode_VH,        ///< vertical - horizontal
-            WireMode_9045,      ///< 90° - 45°
-            WireMode_4590,      ///< 45° - 90°
-            WireMode_Straight,  ///< straight
-            WireMode_COUNT      ///< count of wire modes
-        };
-
 
         // Private Methods
         ProcRetVal processSubStateIdle(BEE_Base* event) noexcept;
@@ -95,28 +88,22 @@ class BES_DrawTrace final : public BES_Base
         ProcRetVal processPositioningSceneEvent(BEE_Base* event) noexcept;
         bool startPositioning(Board& board, const Point& pos,
                               BI_NetPoint* fixedPoint = nullptr) noexcept;
-        bool addNextNetPoint(Board& board, const Point& pos) noexcept;
         bool abortPositioning(bool showErrMsgBox) noexcept;
-        void updateNetpointPositions(const Point& cursorPos) noexcept;
         void layerComboBoxIndexChanged(int index) noexcept;
         void wireWidthComboBoxTextChanged(const QString& width) noexcept;
-        void updateWireModeActionsCheckedState() noexcept;
-        Point calcMiddlePointPos(const Point& p1, const Point p2, WireMode mode) const noexcept;
 
 
         // General Attributes
         SubState mSubState; ///< the current substate
-        WireMode mCurrentWireMode; ///< the current wire mode
         QString mCurrentLayerName; ///< the current board layer name
         PositiveLength mCurrentWidth; ///< the current wire width
-        BI_NetPoint* mFixedNetPoint; ///< the fixed netpoint (start point of the line)
-        BI_NetLine* mPositioningNetLine1; ///< line between fixed point and p1
-        BI_NetPoint* mPositioningNetPoint1; ///< the first netpoint to place
-        BI_NetLine* mPositioningNetLine2; ///< line between p1 and p2
-        BI_NetPoint* mPositioningNetPoint2; ///< the second netpoint to place
+
+        PNS::ROUTER *router = nullptr;
+        PNS::PNS_LIBREPCB_IFACE *iface = nullptr;
+        PNS::MEANDER_PLACER_BASE *meander_placer = nullptr;
+        bool shove = false;
 
         // Widgets for the command toolbar
-        QHash<WireMode, QAction*> mWireModeActions;
         QList<QAction*> mActionSeparators;
         QLabel* mLayerLabel;
         QComboBox* mLayerComboBox;
