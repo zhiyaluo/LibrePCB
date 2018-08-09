@@ -9,6 +9,7 @@ class GraphicsLayer;
 namespace project {
 class NetSignal;
 class Board;
+class BI_Base;
 class BI_NetLine;
 class BI_Via;
 class BI_Footprint;
@@ -111,6 +112,7 @@ private:
     class PNS_LIBREPCB_RULE_RESOLVER *m_ruleResolver = nullptr;
     class PNS_LIBREPCB_DEBUG_DECORATOR *m_debugDecorator = nullptr;
     QVector<QGraphicsItem*> m_preview_items;
+    QVector<librepcb::project::BI_Base*> m_hidden_items;
 
     librepcb::project::Board *board = nullptr;
     PNS::NODE *m_world;

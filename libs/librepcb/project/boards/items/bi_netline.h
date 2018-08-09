@@ -81,6 +81,7 @@ class BI_NetLine final : public BI_Base, public SerializableObject
 
         // Setters
         void setWidth(const PositiveLength& width) noexcept;
+        void setVisible(bool v) noexcept {mGraphicsItem->setVisible(v);}
 
         // General Methods
         void addToBoard() override;
