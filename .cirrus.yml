@@ -1,0 +1,51 @@
+ubuntu1404_task:
+  container:
+    image: librepcb/librepcb-dev:ubuntu-14.04-1
+    cpu: 8
+  env:
+    TRAVIS_OS_NAME: linux
+    DEPLOY_APPIMAGE: true
+    DEPLOY_INSTALLER: true
+  update_submodules_script: git submodule update --init --recursive
+  stylecheck_script: ./ci/stylecheck.sh
+  build_script: ./ci/build.sh
+  test_script: ./ci/test.sh
+  upload_artifacts_script: ./ci/upload_artifacts.sh
+
+ubuntu1604_task:
+  container:
+    image: librepcb/librepcb-dev:ubuntu-16.04-1
+    cpu: 8
+  env:
+    TRAVIS_OS_NAME: linux
+    DEPLOY_APPIMAGE: false
+    DEPLOY_INSTALLER: false
+    BUILD_DOXYGEN: true
+  update_submodules_script: git submodule update --init --recursive
+  stylecheck_script: ./ci/stylecheck.sh
+  build_script: ./ci/build.sh
+  test_script: ./ci/test.sh
+  upload_artifacts_script: ./ci/upload_artifacts.sh
+
+freebsd_task:
+  freebsd_instance:
+    image: freebsd-12-0-release-amd64
+  install_dependencies_script: pkg install -y bash g++ git make devel/qt5
+  update_submodules_script: git submodule update --init --recursive
+  build_script: ./ci/build.sh
+
+osx_task:
+  osx_instance:
+    image: high-sierra-xcode-9.4.1
+  env:
+    TRAVIS_OS_NAME: osx
+    DEPLOY_BUNDLE: true
+    DEPLOY_INSTALLER: true
+    COPYFILE_DISABLE: 1
+    QTIFW_VERSION: 3.0.4
+    PATH: ${PATH}:/Users/${USER}/Library/Python/2.7/bin:/Users/${USER}/Qt/QtIFW-${QTIFW_VERSION}/bin
+  install_dependencies_script: source ./ci/install_dependencies.sh
+  update_submodules_script: git submodule update --init --recursive
+  build_script: ./ci/build.sh
+  test_script: ./ci/test.sh
+  upload_artifacts_script: ./ci/upload_artifacts.sh

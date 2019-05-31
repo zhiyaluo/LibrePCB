@@ -20,7 +20,7 @@ fi
 # run CLI system tests
 if [ "${TRAVIS_OS_NAME-}" = "linux" ]
 then
-  xvfb-run -a --server-args="-screen 0 1024x768x24" pytest -v --librepcb-executable="LibrePCB-CLI-x86_64.AppImage" ./tests/cli
+  xvfb-run -a --server-args="-screen 0 1024x768x24" pytest -v --librepcb-executable="build/install/opt/bin/librepcb-cli" ./tests/cli
 elif [ "${TRAVIS_OS_NAME-}" = "osx" ]
 then
   pytest -v --librepcb-executable="build/install/opt/librepcb-cli.app/Contents/MacOS/librepcb-cli" ./tests/cli
@@ -31,7 +31,7 @@ fi
 # run functional tests
 if [ "${TRAVIS_OS_NAME-}" = "linux" ]
 then
-  xvfb-run -a --server-args="-screen 0 1024x768x24" pytest -v --librepcb-executable="LibrePCB-x86_64.AppImage" ./tests/funq
+  xvfb-run -a --server-args="-screen 0 1024x768x24" pytest -v --librepcb-executable="build/install/opt/bin/librepcb" ./tests/funq
 elif [ "${TRAVIS_OS_NAME-}" = "osx" ]
 then
   pytest -v --librepcb-executable="build/install/opt/librepcb.app/Contents/MacOS/librepcb" ./tests/funq
